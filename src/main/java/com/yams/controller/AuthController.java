@@ -34,6 +34,16 @@ public class AuthController {
         }
     }
 
+    @PostMapping("/auth/register")
+    public ResponseEntity<?> register(@RequestBody AuthRequest authRequest) {
+        try {
+            User user = authService.register(authRequest.getUsername(), authRequest.getPassword());
+            return ResponseEntity.ok(user);
+        } catch (IllegalArgumentException e) {
+            return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(e.getMessage());
+        }
+    }
+
     @GetMapping("/hello")
     public String hello() {
         return "Le serveur Spring Boot est bien réveillé !";

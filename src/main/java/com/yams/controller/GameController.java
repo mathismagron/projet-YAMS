@@ -22,6 +22,11 @@ public class GameController {
         return gameService.getWaitingGames();
     }
 
+    @GetMapping("/history/{userId}")
+    public List<Game> getGameHistory(@PathVariable Long userId) {
+        return gameService.getGamesHistoryForUser(userId);
+    }
+
     @PostMapping("/create")
     public Game createGame(@RequestParam Long userId) {
         return gameService.createGame(userId);

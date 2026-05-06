@@ -1,5 +1,6 @@
 import { useState, useEffect } from 'react';
 import axios from 'axios';
+import GameChat from './GameChat';
 
 const CATEGORIES = [
   { key: 'ONES', label: 'As (1)' },
@@ -8,6 +9,7 @@ const CATEGORIES = [
   { key: 'FOURS', label: 'Quatre (4)' },
   { key: 'FIVES', label: 'Cinq (5)' },
   { key: 'SIXES', label: 'Six (6)' },
+  { key: 'BONUS', label: 'Bonus (si >= 63 aux 1-6)' },
   { key: 'THREE_OF_A_KIND', label: 'Brelan' },
   { key: 'FOUR_OF_A_KIND', label: 'Carré' },
   { key: 'FULL_HOUSE', label: 'Full' },
@@ -189,6 +191,9 @@ function GameBoard({ user, initialGame, onLeave }) {
             </button>
           </div>
         )}
+
+        {/* Espace Chat en bas à gauche */}
+        {<GameChat gameId={game.id} user={user} />}
       </div>
 
       {/* Zone de droite : Grille MULTIJOUEURS */}
@@ -215,6 +220,22 @@ function GameBoard({ user, initialGame, onLeave }) {
                 <tr key={cat.key}>
                   <td style={{ padding: "8px 5px", borderBottom: "1px solid #ddd" }}>{cat.label}</td>
                   {game.scorecards.map(sc => {
+                    if (cat.key === 'BONUS') {
+                      const upperKeys = ['ONES', 'TWOS', 'THREES', 'FOURS', 'FIVES', 'SIXES'];
+                      const upperScore = upperKeys.reduce((sum, key) => sum + (sc.scores[key] || 0), 0);
+                      const allUpperFilled = upperKeys.every(key => sc.scores[key] !== undefined);
+                      
+                      let bonusPoints = "-";
+                      if (upperScore >= 63) bonusPoints = 35;
+                      else if (allUpperFilled) bonusPoints = 0;
+                      
+                      return (
+                        <td key={sc.player.id} style={{ padding: "8px 5px", borderBottom: "1px solid #ddd", textAlign: "center", backgroundColor: "#f0f8ff" }}>
+                          <strong>{bonusPoints} {allUpperFilled || upperScore >= 63 ? `(Total: ${upperScore})` : `(${upperScore}/63)`}</strong>
+                        </td>
+                      );
+                    }
+
                     const hasPlayed = sc.scores[cat.key] !== undefined;
                     const isMe = sc.player.id === user.id;
 

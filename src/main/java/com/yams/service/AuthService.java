@@ -41,9 +41,25 @@ public class AuthService {
                 throw new IllegalArgumentException("Mot de passe incorrect.");
             }
         } else {
-            // Création d'un nouvel utilisateur
-            User newUser = new User(username, password);
-            return userRepository.save(newUser);
+            throw new IllegalArgumentException("Utilisateur non trouvé.");
         }
+    }
+
+    @Transactional
+    public User register(String username, String password) {
+        if (username == null || username.trim().isEmpty()) {
+            throw new IllegalArgumentException("Le pseudo ne peut pas être vide.");
+        }
+        if (password == null || password.trim().isEmpty()) {
+            throw new IllegalArgumentException("Le mot de passe ne peut pas être vide.");
+        }
+
+        Optional<User> optUser = userRepository.findByUsername(username);
+        if (optUser.isPresent()) {
+            throw new IllegalArgumentException("Le pseudo est déjà pris.");
+        }
+
+        User newUser = new User(username, password);
+        return userRepository.save(newUser);
     }
 }

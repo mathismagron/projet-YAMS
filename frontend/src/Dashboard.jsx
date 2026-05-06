@@ -2,9 +2,11 @@ import { useState, useEffect } from 'react';
 import axios from 'axios';
 import GameBoard from './GameBoard';
 
-function Dashboard({ user }) {
+function Dashboard({ user, onLogout }) {
   const [games, setGames] = useState([]);
   const [currentGame, setCurrentGame] = useState(null);
+  const [showHistory, setShowHistory] = useState(false);
+  const [history, setHistory] = useState([]);
 
   // Charger la liste des parties
   useEffect(() => {
@@ -39,17 +41,68 @@ function Dashboard({ user }) {
     }
   };
 
+  const handleViewGame = async (game) => {
+    try {
+      const response = await axios.get(`/api/games/${game.id}`);
+      setCurrentGame(response.data);
+    } catch (error) {
+      console.error("Erreur pour charger la partie", error);
+      alert(error.response?.data || "Erreur pour charger la partie");
+    }
+  };
+
+  const fetchHistory = async () => {
+    try {
+      const response = await axios.get(`/api/games/history/${user.id}`);
+      setHistory(response.data);
+      setShowHistory(true);
+    } catch (error) {
+      console.error("Erreur lors de la récupération de l'historique", error);
+    }
+  };
+
   // Si on est dans une partie, on affiche le composant de jeu
   if (currentGame) {
-    return <GameBoard user={user} initialGame={currentGame} onLeave={() => setCurrentGame(null)} />;
+    return <GameBoard user={user} initialGame={currentGame} onLeave={() => { setCurrentGame(null); fetchGames(); }} />;
+  }
+
+  if (showHistory) {
+    return (
+      <div className="dashboard">
+        <h2>Historique de {user.username}</h2>
+        <button onClick={() => setShowHistory(false)}>Retour au Tableau de bord</button>
+        {history.length === 0 ? (
+          <p>Vous n'avez joué aucune partie pour le moment.</p>
+        ) : (
+          <ul>
+            {history.map(g => (
+              <li key={g.id} style={{ marginBottom: "10px", padding: "10px", border: "1px solid #ccc", listStyleType: "none" }}>
+                <strong>Partie #{g.id}</strong> - Statut: {g.status}
+                <button onClick={() => handleViewGame(g)} style={{marginLeft: "15px"}}>
+                  Voir les scores
+                </button>
+              </li>
+            ))}
+          </ul>
+        )}
+      </div>
+    );
   }
 
   return (
     <div className="dashboard">
-      <h2>Tableau de bord - Bienvenue {user.username}</h2>
+      <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
+        <h2>Tableau de bord - Bienvenue {user.username}</h2>
+        <button onClick={onLogout} style={{ backgroundColor: "#dc3545", color: "white", border: "none", padding: "8px 15px", borderRadius: "5px", cursor: "pointer" }}>
+          Se déconnecter
+        </button>
+      </div>
       
-      <button onClick={handleCreateGame}>Créer une nouvelle partie</button>
-      <button onClick={fetchGames} style={{marginLeft: "10px"}}>Actualiser la liste</button>
+      <div style={{ marginBottom: "20px" }}>
+        <button onClick={handleCreateGame}>Créer une nouvelle partie</button>
+        <button onClick={fetchGames} style={{marginLeft: "10px"}}>Actualiser la liste</button>
+        <button onClick={fetchHistory} style={{marginLeft: "10px", backgroundColor: "#17a2b8", color: "white", border: "none", padding: "5px 10px", cursor: "pointer"}}>Mon historique</button>
+      </div>
 
       <h3>Parties disponibles :</h3>
       {games.length === 0 ? (

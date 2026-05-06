@@ -26,6 +26,10 @@ public class GameService {
         return gameRepository.findAll(); // Plus tard on filtrera sur status
     }
 
+    public List<Game> getGamesHistoryForUser(Long userId) {
+        return gameRepository.findGamesByUserId(userId);
+    }
+
     @Transactional
     public Game createGame(Long userId) {
         User host = userRepository.findById(userId)
@@ -137,6 +141,17 @@ public class GameService {
         
         // Recalcul du total
         int total = currentSc.getScores().values().stream().mapToInt(Integer::intValue).sum();
+        
+        // Addition du bonus
+        int upperScore = 0;
+        String[] upperCategories = {"ONES", "TWOS", "THREES", "FOURS", "FIVES", "SIXES"};
+        for (String cat : upperCategories) {
+            upperScore += currentSc.getScores().getOrDefault(cat, 0);
+        }
+        if (upperScore >= 63) {
+            total += 35;
+        }
+        
         currentSc.setTotalScore(total);
 
         // Reset pour le tour suivant
