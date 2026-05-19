@@ -137,6 +137,8 @@ function GameBoard({ user, initialGame, onLeave }) {
         {game.status === 'WAITING' && (
           <div style={{ marginTop: "20px", padding: "15px", backgroundColor: "#fff3cd", border: "1px solid #ffeeba" }}>
             <h3>Salle d'attente ({game.scorecards.length}/4 joueurs)</h3>
+            {game.private && <p><strong>Code privé pour rejoindre: {game.joinCode}</strong></p>}
+            {game.joinCode && !game.private && <p><strong>Code privé pour rejoindre: {game.joinCode}</strong></p>}
             <ul>
               {game.scorecards.map(sc => <li key={sc.player.id}>{sc.player.username}</li>)}
             </ul>

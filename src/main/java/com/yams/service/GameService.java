@@ -10,6 +10,7 @@ import org.springframework.transaction.annotation.Transactional;
 
 import java.util.List;
 import java.util.Random;
+import java.util.stream.Collectors;
 
 @Service
 public class GameService {
@@ -23,7 +24,9 @@ public class GameService {
     }
 
     public List<Game> getWaitingGames() {
-        return gameRepository.findAll(); // Plus tard on filtrera sur status
+        return gameRepository.findAll().stream()
+                .filter(g -> "WAITING".equals(g.getStatus()) && !g.isPrivate())
+                .collect(Collectors.toList());
     }
 
     public List<Game> getGamesHistoryForUser(Long userId) {
@@ -31,12 +34,17 @@ public class GameService {
     }
 
     @Transactional
-    public Game createGame(Long userId) {
+    public Game createGame(Long userId, boolean isPrivate) {
         User host = userRepository.findById(userId)
                 .orElseThrow(() -> new IllegalArgumentException("Utilisateur introuvable"));
         
         Game game = new Game();
         game.setHost(host);
+        
+        if (isPrivate) {
+            game.setPrivate(true);
+            game.setJoinCode(String.format("%06d", random.nextInt(1000000)));
+        }
         
         Scorecard scorecard = new Scorecard(host);
         game.getScorecards().add(scorecard);
@@ -50,11 +58,18 @@ public class GameService {
     }
 
     @Transactional
-    public Game joinGame(Long gameId, Long userId) {
+    public Game joinGame(Long gameId, Long userId, String joinCode) {
         Game game = getGame(gameId);
         if (!"WAITING".equals(game.getStatus())) {
             throw new IllegalStateException("La partie a déjà commencé ou est terminée.");
         }
+        
+        if (game.isPrivate()) {
+            if (joinCode == null || !joinCode.equals(game.getJoinCode())) {
+                throw new IllegalStateException("Code de partie invalide.");
+            }
+        }
+        
         if (game.getScorecards().size() >= 4) {
             throw new IllegalStateException("La partie est pleine (max 4 joueurs).");
         }
@@ -67,6 +82,13 @@ public class GameService {
             game.getScorecards().add(new Scorecard(player));
         }
         return gameRepository.save(game);
+    }
+
+    @Transactional
+    public Game joinGameByCode(String joinCode, Long userId) {
+        Game game = gameRepository.findByJoinCode(joinCode)
+                .orElseThrow(() -> new IllegalArgumentException("Code de partie introuvable."));
+        return joinGame(game.getId(), userId, joinCode);
     }
 
     @Transactional

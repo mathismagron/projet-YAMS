@@ -28,8 +28,8 @@ public class GameController {
     }
 
     @PostMapping("/create")
-    public Game createGame(@RequestParam Long userId) {
-        return gameService.createGame(userId);
+    public Game createGame(@RequestParam Long userId, @RequestParam(required = false, defaultValue = "false") boolean isPrivate) {
+        return gameService.createGame(userId, isPrivate);
     }
 
     @GetMapping("/{id}")
@@ -38,8 +38,13 @@ public class GameController {
     }
 
     @PostMapping("/{id}/join")
-    public Game joinGame(@PathVariable Long id, @RequestParam Long userId) {
-        return gameService.joinGame(id, userId);
+    public Game joinGame(@PathVariable Long id, @RequestParam Long userId, @RequestParam(required = false) String joinCode) {
+        return gameService.joinGame(id, userId, joinCode);
+    }
+
+    @PostMapping("/join-private")
+    public Game joinGameByCode(@RequestParam String joinCode, @RequestParam Long userId) {
+        return gameService.joinGameByCode(joinCode, userId);
     }
 
     @PostMapping("/{id}/start")

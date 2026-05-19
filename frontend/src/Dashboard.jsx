@@ -7,6 +7,8 @@ function Dashboard({ user, onLogout }) {
   const [currentGame, setCurrentGame] = useState(null);
   const [showHistory, setShowHistory] = useState(false);
   const [history, setHistory] = useState([]);
+  const [isPrivate, setIsPrivate] = useState(false);
+  const [joinCode, setJoinCode] = useState('');
 
   // Charger la liste des parties
   useEffect(() => {
@@ -24,10 +26,21 @@ function Dashboard({ user, onLogout }) {
 
   const handleCreateGame = async () => {
     try {
-      const response = await axios.post(`/api/games/create?userId=${user.id}`);
+      const response = await axios.post(`/api/games/create?userId=${user.id}&isPrivate=${isPrivate}`);
       setCurrentGame(response.data);
     } catch (error) {
       console.error("Erreur lors de la création", error);
+    }
+  };
+
+  const handleJoinPrivateGame = async () => {
+    if (!joinCode) return;
+    try {
+      const response = await axios.post(`/api/games/join-private?userId=${user.id}&joinCode=${joinCode}`);
+      setCurrentGame(response.data);
+    } catch (error) {
+      console.error("Erreur pour rejoindre avec le code", error);
+      alert(error.response?.data || "Code invalide");
     }
   };
 
@@ -98,13 +111,31 @@ function Dashboard({ user, onLogout }) {
         </button>
       </div>
       
-      <div style={{ marginBottom: "20px" }}>
+      <div style={{ marginBottom: "20px", display: "flex", gap: "10px", alignItems: "center" }}>
         <button onClick={handleCreateGame}>Créer une nouvelle partie</button>
-        <button onClick={fetchGames} style={{marginLeft: "10px"}}>Actualiser la liste</button>
-        <button onClick={fetchHistory} style={{marginLeft: "10px", backgroundColor: "#17a2b8", color: "white", border: "none", padding: "5px 10px", cursor: "pointer"}}>Mon historique</button>
+        <label>
+          <input 
+            type="checkbox" 
+            checked={isPrivate} 
+            onChange={(e) => setIsPrivate(e.target.checked)} 
+          /> 
+          Privée
+        </label>
+        <button onClick={fetchGames}>Actualiser la liste</button>
+        <button onClick={fetchHistory} style={{ backgroundColor: "#17a2b8", color: "white", border: "none", padding: "5px 10px", cursor: "pointer"}}>Mon historique</button>
       </div>
 
-      <h3>Parties disponibles :</h3>
+      <div style={{ marginBottom: "20px", display: "flex", gap: "10px", alignItems: "center" }}>
+        <input 
+          type="text" 
+          placeholder="Code privé" 
+          value={joinCode} 
+          onChange={(e) => setJoinCode(e.target.value)} 
+        />
+        <button onClick={handleJoinPrivateGame}>Rejoindre une partie privée</button>
+      </div>
+
+      <h3>Parties publiques disponibles :</h3>
       {games.length === 0 ? (
         <p>Aucune partie en cours.</p>
       ) : (
