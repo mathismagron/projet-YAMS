@@ -124,6 +124,15 @@ function GameBoard({ user, initialGame, onLeave }) {
     }
   };
 
+  const handleAddFriend = async (friendId) => {
+    try {
+      await axios.post(`/api/friends/add?userId1=${user.id}&userId2=${friendId}`);
+      alert("Ami ajouté avec succès !");
+    } catch (error) {
+      alert(error.response?.data || "Erreur lors de l'ajout en ami");
+    }
+  };
+
   const isHost = game.host?.id === user.id;
 
   return (
@@ -209,6 +218,15 @@ function GameBoard({ user, initialGame, onLeave }) {
                 <th key={sc.player.id} style={{ borderBottom: "2px solid black", padding: "5px", textAlign: "center" }}>
                   {sc.player.username}
                   {game.status === 'IN_PROGRESS' && index === game.currentPlayerIndex ? " 🎲" : ""}
+                  {sc.player.id !== user.id && (
+                    <button 
+                      onClick={() => handleAddFriend(sc.player.id)}
+                      style={{marginLeft: "5px", padding: "2px 5px", fontSize: "0.8em"}}
+                      title="Ajouter en ami"
+                    >
+                      + Ami
+                    </button>
+                  )}
                 </th>
               ))}
             </tr>

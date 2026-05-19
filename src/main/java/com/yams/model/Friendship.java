@@ -1,9 +1,7 @@
 package com.yams.model;
 
-import jakarta.persistence.Entity;
-import jakarta.persistence.GeneratedValue;
-import jakarta.persistence.GenerationType;
-import jakarta.persistence.Id;
+import jakarta.persistence.*;
+import java.time.LocalDateTime;
 
 @Entity
 public class Friendship {
@@ -11,6 +9,24 @@ public class Friendship {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "user1_id", nullable = false)
+    private User user1;
+
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "user2_id", nullable = false)
+    private User user2;
+
+    @Column(nullable = false)
+    private LocalDateTime createdAt;
+
+    public Friendship() {}
+
+    public Friendship(User user1, User user2) {
+        this.user1 = user1;
+        this.user2 = user2;
+        this.createdAt = LocalDateTime.now();
+    }
 
     public Long getId() {
         return id;
@@ -18,5 +34,29 @@ public class Friendship {
 
     public void setId(Long id) {
         this.id = id;
+    }
+
+    public User getUser1() {
+        return user1;
+    }
+
+    public void setUser1(User user1) {
+        this.user1 = user1;
+    }
+
+    public User getUser2() {
+        return user2;
+    }
+
+    public void setUser2(User user2) {
+        this.user2 = user2;
+    }
+
+    public LocalDateTime getCreatedAt() {
+        return createdAt;
+    }
+
+    public void setCreatedAt(LocalDateTime createdAt) {
+        this.createdAt = createdAt;
     }
 }

@@ -1,5 +1,6 @@
 package com.yams.service;
 
+import com.yams.model.AchievementType;
 import com.yams.model.Game;
 import com.yams.model.Scorecard;
 import com.yams.model.User;
@@ -16,11 +17,13 @@ import java.util.stream.Collectors;
 public class GameService {
     private final GameRepository gameRepository;
     private final UserRepository userRepository;
+    private final AchievementService achievementService;
     private final Random random = new Random();
 
-    public GameService(GameRepository gameRepository, UserRepository userRepository) {
+    public GameService(GameRepository gameRepository, UserRepository userRepository, AchievementService achievementService) {
         this.gameRepository = gameRepository;
         this.userRepository = userRepository;
+        this.achievementService = achievementService;
     }
 
     public List<Game> getWaitingGames() {
@@ -164,6 +167,10 @@ public class GameService {
         // Recalcul du total
         int total = currentSc.getScores().values().stream().mapToInt(Integer::intValue).sum();
         
+        if ("YAMS".equals(category) && score == 50) {
+            achievementService.unlockAchievement(currentSc.getPlayer(), AchievementType.ROLL_YAMS);
+        }
+
         // Addition du bonus
         int upperScore = 0;
         String[] upperCategories = {"ONES", "TWOS", "THREES", "FOURS", "FIVES", "SIXES"};
@@ -191,6 +198,19 @@ public class GameService {
                 .allMatch(sc -> sc.getScores().size() == 13);
         if (allFinished) {
             game.setStatus("FINISHED");
+            
+            int maxScore = game.getScorecards().stream().mapToInt(Scorecard::getTotalScore).max().orElse(0);
+            for (Scorecard sc : game.getScorecards()) {
+                User player = sc.getPlayer();
+                achievementService.unlockAchievement(player, AchievementType.FIRST_GAME);
+                
+                if (sc.getTotalScore() == maxScore) {
+                    achievementService.unlockAchievement(player, AchievementType.WIN_FIRST_GAME);
+                    achievementService.checkWinTenGames(player);
+                } else {
+                    achievementService.unlockAchievement(player, AchievementType.LOSE_FIRST_GAME);
+                }
+            }
         }
         
         return gameRepository.save(game);
